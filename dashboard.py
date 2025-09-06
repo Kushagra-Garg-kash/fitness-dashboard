@@ -17,13 +17,11 @@ st.markdown("Explore your health and fitness trends interactively.")
 def load_data():
     df = pd.read_csv("fitness_dashboard_data.csv")
     df["Date"] = pd.to_datetime(df["Date"])
-    df["MonthPeriod"] = df["Date"].dt.to_period("M")   # month-year
+    df["MonthPeriod"] = df["Date"].dt.to_period("M")
     return df
 
 # Load default data
 df = load_data()
-
-# If user uploaded a file, replace default
 if "user_df" in st.session_state:
     df = st.session_state["user_df"]
 
@@ -32,48 +30,77 @@ if "user_df" in st.session_state:
 # ===========================
 st.sidebar.header("📌 Filters")
 
-# Theme Toggle
+# ===========================
+# THEME TOGGLE
+# ===========================
 theme = st.sidebar.radio("🎨 Theme", ["Light", "Dark"])
+
 if theme == "Dark":
     st.markdown(
         """
         <style>
-        .stApp {
-            background-color: #1E1E1E;
-            color: #FAFAFA;
+        .stApp {background-color: #1E1E1E; color: #FAFAFA;}
+        .stSidebar, .css-1d391kg, .css-1cypcdb {
+            background-color: #262626 !important; color: #FAFAFA !important;
+        }
+        .stButton>button {
+            background-color: #333333 !important; color: #FAFAFA !important;
+            border-radius: 10px; border: 1px solid #555555;
+        }
+        .stButton>button:hover {
+            background-color: #444444 !important; border: 1px solid #888888;
+        }
+        .stExpander {
+            background-color: #2a2a2a !important; color: #FAFAFA !important;
         }
         </style>
         """,
         unsafe_allow_html=True,
     )
+    plotly_template = "plotly_dark"
+    heatmap_cmap = "rocket"
+    kpi_bg = "#2a2a2a"
+    kpi_text = "#FAFAFA"
+
 else:
     st.markdown(
         """
         <style>
-        .stApp {
-            background-color: #FFFFFF;
-            color: #000000;
+        .stApp {background-color: #FFFFFF; color: #000000;}
+        .stSidebar, .css-1d391kg, .css-1cypcdb {
+            background-color: #f9f9f9 !important; color: #000000 !important;
+        }
+        .stButton>button {
+            background-color: #f0f0f0 !important; color: #000000 !important;
+            border-radius: 10px; border: 1px solid #cccccc;
+        }
+        .stButton>button:hover {
+            background-color: #e0e0e0 !important; border: 1px solid #aaaaaa;
+        }
+        .stExpander {
+            background-color: #f5f5f5 !important; color: #000000 !important;
         }
         </style>
         """,
         unsafe_allow_html=True,
     )
+    plotly_template = "plotly_white"
+    heatmap_cmap = "coolwarm"
+    kpi_bg = "#f9f9f9"
+    kpi_text = "#333333"
 
-# Month filter (only months in CSV)
+# ===========================
+# Filters
+# ===========================
 unique_months = df["MonthPeriod"].unique().astype(str)
 selected_month = st.sidebar.selectbox("📅 Select Month", options=unique_months, index=len(unique_months)-1)
-
 df_month = df[df["MonthPeriod"] == selected_month]
 
 all_metrics = ["Steps", "Calories", "WorkoutMinutes", "SleepHours", "WaterIntake(L)", "HeartRate"]
-selected_metrics = st.sidebar.multiselect(
-    "Select Metrics to Display",
-    options=all_metrics,
-    default=all_metrics  
-)
+selected_metrics = st.sidebar.multiselect("Select Metrics to Display", options=all_metrics, default=all_metrics)
 
 # ===========================
-# KPI CARDS (Quick Stats)
+# KPI CARDS
 # ===========================
 st.subheader(f"📌 Quick Stats ({selected_month})")
 
@@ -82,44 +109,48 @@ col1, col2, col3 = st.columns(3)
 with col1:
     total_steps = df_month["Steps"].sum()
     st.markdown(f"""
-    <div style="background-color:#f9f9f9; padding:20px; border-radius:15px; text-align:center; box-shadow:0px 2px 8px rgba(0,0,0,0.1);">
-         <p style="margin:0; font-size:16px; color:#333; font-weight:600;">Total Steps</p>
-        <h2 style="color:#1f77b4; margin-top:0; font-size:32px;">{total_steps:,}</h2>
+    <div style="background-color:{kpi_bg}; padding:20px; border-radius:15px; text-align:center;
+                box-shadow:0px 2px 8px rgba(0,0,0,0.2); color:{kpi_text};">
+         <p style="margin:0; font-size:16px; font-weight:600;">Total Steps</p>
+        <h2 style="margin-top:0; font-size:32px;">{total_steps:,}</h2>
     </div>
     """, unsafe_allow_html=True)
 
 with col2:
     avg_sleep = df_month["SleepHours"].mean()
     st.markdown(f"""
-    <div style="background-color:#f9f9f9; padding:20px; border-radius:15px; text-align:center; box-shadow:0px 2px 8px rgba(0,0,0,0.1);">
-         <p style="margin:0; font-size:16px; color:#333; font-weight:600;">Average Sleep</p>
-        <h2 style="color:#2ca02c; margin-top:0;">{avg_sleep:.1f} hrs</h2>
+    <div style="background-color:{kpi_bg}; padding:20px; border-radius:15px; text-align:center;
+                box-shadow:0px 2px 8px rgba(0,0,0,0.2); color:{kpi_text};">
+         <p style="margin:0; font-size:16px; font-weight:600;">Average Sleep</p>
+        <h2 style="margin-top:0;">{avg_sleep:.1f} hrs</h2>
     </div>
     """, unsafe_allow_html=True)
 
 with col3:
     total_calories = df_month["Calories"].sum()
     st.markdown(f"""
-    <div style="background-color:#f9f9f9; padding:20px; border-radius:15px; text-align:center; box-shadow:0px 2px 8px rgba(0,0,0,0.1);">
-         <p style="margin:0; font-size:16px; color:#333; font-weight:600;">Total Calories</p>
-        <h2 style="color:#ff7f0e; margin-top:0;">{total_calories:,}</h2>
+    <div style="background-color:{kpi_bg}; padding:20px; border-radius:15px; text-align:center;
+                box-shadow:0px 2px 8px rgba(0,0,0,0.2); color:{kpi_text};">
+         <p style="margin:0; font-size:16px; font-weight:600;">Total Calories</p>
+        <h2 style="margin-top:0;">{total_calories:,}</h2>
     </div>
     """, unsafe_allow_html=True)
 
 # ===========================
-# TABS FOR SECTIONS
+# Tabs
 # ===========================
 tab1, tab2, tab3, tab4 = st.tabs(["📊 Graphs", "🤖 Insights", "📈 Trends","📥 Upload Data"])
 
-# ------------------- Tab 1: Graphs -------------------
+# -------- Tab 1: Graphs --------
 with tab1:
     st.subheader("Which factors are most connected in my life?")
     if selected_metrics:  
         corr = df[selected_metrics].corr()
         fig, ax = plt.subplots(figsize=(8, 6))
-        sns.heatmap(corr, annot=True, cmap="coolwarm", center=0, square=True, fmt=".2f", ax=ax)
-        ax.set_title("Correlation Heatmap of Fitness Metrics", fontsize=14, pad=15)
-        st.pyplot(fig)  
+        sns.heatmap(corr, annot=True, cmap=heatmap_cmap, center=0, square=True, fmt=".2f", ax=ax)
+        ax.set_title("Correlation Heatmap of Fitness Metrics", fontsize=14, pad=15, color=kpi_text)
+        fig.patch.set_facecolor("black" if theme == "Dark" else "white")
+        st.pyplot(fig)
     else:
         st.info("👉 Please select at least one metric from the sidebar.")
 
@@ -129,14 +160,13 @@ with tab1:
         fig = px.area(weekly, x="Date", y=selected_metrics,
                       title="Weekly Activity Breakdown",
                       labels={"value": "Total Activity", "Date": "Week"})
-        fig.update_layout(template="plotly_white")
+        fig.update_layout(template=plotly_template)
         st.plotly_chart(fig, use_container_width=True)
 
-    # 🔍 Raw Data Viewer
     with st.expander("📂 See Raw Data"):
         st.dataframe(df.head(50))
 
-# ------------------- Tab 2: Insights -------------------
+# -------- Tab 2: Insights --------
 with tab2:
     st.subheader("🤖 AI-Powered Insights")
 
@@ -174,7 +204,7 @@ with tab2:
     for insight in insights:
         st.markdown(f"- {insight}")
 
-# ------------------- Tab 3: Trends -------------------
+# -------- Tab 3: Trends --------
 with tab3:
     st.subheader("📊 Calendar Heatmap of Activity")
     if selected_metrics:
@@ -184,6 +214,7 @@ with tab3:
         fig = px.density_heatmap(df, x="Weekday", y="Month", z=heatmap_metric,
                                  histfunc="avg", color_continuous_scale="YlGnBu",
                                  title=f"Average {heatmap_metric} by Weekday & Month")
+        fig.update_layout(template=plotly_template)
         st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("📈 7-Day Rolling Average of Selected Metrics")
@@ -197,20 +228,19 @@ with tab3:
         df_long["Metric"] = df_long["Metric"].str.replace("_Roll", "")
         fig = px.line(df_long, x="Date", y="Value", color="Metric",
                       title="7-Day Rolling Average of Selected Metrics")
+        fig.update_layout(template=plotly_template)
         st.plotly_chart(fig, use_container_width=True)
 
-# ------------------- Tab 4: Upload Data -------------------
+# -------- Tab 4: Upload Data --------
 with tab4:
     st.subheader("📥 Upload Your Data")
     
     uploaded_file = st.file_uploader("Upload your fitness CSV", type=["csv"])
-
     required_columns = ["Date", "Steps", "Calories", "WorkoutMinutes", "SleepHours", "WaterIntake(L)", "HeartRate"]
 
     if uploaded_file:
         try:
             df_user = pd.read_csv(uploaded_file)
-
             if not all(col in df_user.columns for col in required_columns):
                 st.error(f"❌ Invalid CSV. Your file must contain these columns:\n\n{', '.join(required_columns)}")
             else:
@@ -223,4 +253,3 @@ with tab4:
                     st.dataframe(df_user.head())
         except Exception as e:
             st.error(f"⚠️ Error reading file: {e}")
-
