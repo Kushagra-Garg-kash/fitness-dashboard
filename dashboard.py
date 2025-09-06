@@ -38,7 +38,7 @@ if theme == "Dark":
     st.markdown(
         """
         <style>
-        .main {
+        .stApp {
             background-color: #1E1E1E;
             color: #FAFAFA;
         }
@@ -50,7 +50,7 @@ else:
     st.markdown(
         """
         <style>
-        .main {
+        .stApp {
             background-color: #FFFFFF;
             color: #000000;
         }
