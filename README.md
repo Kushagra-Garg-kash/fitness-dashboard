@@ -63,6 +63,12 @@ This project is a dynamic and interactive fitness dashboard built with **Streaml
 
 ---
 
+## 🚀 Live App 
+
+[![Open Streamlit App](https://img.shields.io/badge/Streamlit-App-blue)](https://fitnessdashboard.streamlit.app/)
+
+---
+
 ## 🤝 Contribution
 
 Contributions are welcome! If you have suggestions or improvements, please open an issue or submit a pull request.
